@@ -9,11 +9,32 @@ fn panic(_info : &PanicInfo) -> ! {
     loop {}
 }
 
+use core::alloc::{GlobalAlloc, Layout};
+
+pub struct GreatAllocator;
+
+unsafe impl GlobalAlloc for GreatAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        //do shit
+
+        0 as *mut u8
+
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        //do shit
+
+    }
+}
+
+
+#[global_allocator]
+static ALLOCATOR: GreatAllocator = GreatAllocator;
 
 #[no_mangle]
-extern "C" fn _start() -> i32 {
+unsafe extern "C" fn _start() {
 
-    let letter = 33+ 34;
+    ALLOCATOR.alloc(Layout::new::<u8>());
 
-    return letter;
+
 }
