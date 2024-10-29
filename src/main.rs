@@ -63,13 +63,17 @@ static ALLOCATOR: Lululucator = Lululucator::new();
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let layout = Layout::from_size_align(1000, 1).unwrap();
+    let luluint = Layout::from_size_align(1000, 1).unwrap();
 
-    let ma_variable = unsafe { ALLOCATOR.alloc(layout) };
+    let ma_variable = unsafe { ALLOCATOR.alloc(luluint) };
+    let ma_variable2 = unsafe { ALLOCATOR.alloc(luluint) };
 
     let addr = "prout test";
-    //debug::print(b"Salut test");
     debug::print_hex(&ma_variable as *const _ as usize);
+    debug::print(b"\n");
+    //ok
+    debug::print_hex(&ma_variable2 as *const _ as usize);
+    debug::print(b"\n");
 
     loop {}
 }
