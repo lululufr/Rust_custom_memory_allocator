@@ -1,6 +1,9 @@
 #![no_std]
 #![no_main]
 
+mod debug;
+use debug::{print, print_hex};
+
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -62,7 +65,11 @@ static ALLOCATOR: Lululucator = Lululucator::new();
 pub extern "C" fn _start() -> ! {
     let layout = Layout::from_size_align(1000, 1).unwrap();
 
-    let maVariable = unsafe { ALLOCATOR.alloc(layout) };
+    let ma_variable = unsafe { ALLOCATOR.alloc(layout) };
+
+    let addr = "prout test";
+    //debug::print(b"Salut test");
+    debug::print_hex(&ma_variable as *const _ as usize);
 
     loop {}
 }
