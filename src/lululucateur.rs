@@ -1,6 +1,6 @@
 use core::alloc::{GlobalAlloc, Layout};
 use core::arch::asm;
-use core::ptr::null_mut;
+use core::ptr::{null, null_mut};
 use core::sync;
 use core::u8;
 
@@ -43,8 +43,6 @@ unsafe impl GlobalAlloc for Lululucator {
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
 }
 
-//unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
-
 impl Lululucator {
     pub const fn new() -> Lululucator {
         Lululucator {
@@ -54,10 +52,10 @@ impl Lululucator {
             free_list: null_mut(),
         }
     }
-    pub unsafe fn free(&mut self, addr: *mut u8, layout: Layout) {
-        let freeblock = addr as *mut FreeBlock;
-        (*freeblock).size = layout.size();
-        (*freeblock).next = self.free_list;
-        self.free_list = freeblock;
+    pub fn free(&mut self, addr: *mut u8, layout: Layout) {
+        let mut freeblock:FreeBlock;
+        freeblock.size = layout.size();
+        freeblock.next = self.free_list;
+        //self.free_list = freeblock;
     }
 }
