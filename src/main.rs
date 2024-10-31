@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![no_std]
+#![allow(dead_code)]
+#![allow(unused)]
+#![warn(unsafe_op_in_unsafe_fn)]
 
 mod debug;
 use debug::{print, print_hex};
@@ -14,14 +18,22 @@ fn panic(_info: &PanicInfo) -> ! {
 use core::alloc::{GlobalAlloc, Layout};
 use core::arch::asm;
 use core::ptr::null_mut;
+use core::sync;
 use core::u8;
+
+pub struct FreeBlock {
+    next: *mut FreeBlock,
+    size: usize,
+}
 
 pub struct Lululucator {
     heap_start: usize,
     heap_end: usize,
     init: bool,
-    // free_list: *mut FreeBlock,
+    free_list: *mut FreeBlock,
 }
+
+unsafe impl Sync for Lululucator {}
 
 unsafe impl GlobalAlloc for Lululucator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
@@ -48,13 +60,22 @@ unsafe impl GlobalAlloc for Lululucator {
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
 }
 
+//unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
+
 impl Lululucator {
     const fn new() -> Lululucator {
         Lululucator {
             heap_start: 0,
             heap_end: 0,
             init: false,
+            free_list: null_mut(),
         }
+    }
+    unsafe fn free(&mut self, addr: *mut u8, layout: Layout) {
+        let freeblock = addr as *mut FreeBlock;
+        (*freeblock).size = layout.size();
+        (*freeblock).next = self.free_list;
+        self.free_list = freeblock;
     }
 }
 
