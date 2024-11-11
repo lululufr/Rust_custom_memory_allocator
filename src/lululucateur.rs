@@ -7,10 +7,12 @@ use core::cell::Cell;
 
 pub struct Lululucator {
     heap_ptr: Cell<usize>,
-    heap_end: Cell<usize>,
+    brk: Cell<usize>,
     init: Cell<bool>,
 }
 
+#[allow(clippy::unnecessary_operation)]
+#[allow(unsafe_code)]
 unsafe impl GlobalAlloc for Lululucator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let mut brk_addr: usize;
@@ -22,7 +24,7 @@ unsafe impl GlobalAlloc for Lululucator {
                 "syscall",
                 "mov rdi, rax",
 
-                "add rdi, 0x3000",
+                "add rdi, 0x5000",
                 "mov rax, 12",
                 "syscall",
 
@@ -31,9 +33,26 @@ unsafe impl GlobalAlloc for Lululucator {
             );
 
             &self.heap_ptr.set(brk_addr + layout.size());
-            &self.heap_end.set(brk_addr);
+            &self.brk.set(brk_addr);
             &self.init.set(true);
-            ((brk_addr - 0x3000) + layout.size()) as *mut u8
+            ((brk_addr - 0x5000) + layout.size()) as *mut u8
+        } else if (self.heap_ptr.get() + layout.size()) > self.brk.get() {
+            asm!(
+                "mov rax, 12",
+                "mov rdi, 0",
+                "syscall",
+
+                "mov rdi, rax",
+                "add rdi, 0x5000",
+                "mov rax, 12",
+                "syscall",
+
+                lateout("rax") brk_addr,
+                out("rdi") _,
+            );
+            &self.brk.set(brk_addr);
+            &self.heap_ptr.set(brk_addr + layout.size());
+            ((brk_addr - 0x5000) + layout.size()) as *mut u8
         } else {
             &self.heap_ptr.set(&self.heap_ptr.get() + layout.size());
 
@@ -48,7 +67,7 @@ impl Lululucator {
     pub const fn new() -> Lululucator {
         Lululucator {
             heap_ptr: Cell::new(0),
-            heap_end: Cell::new(0),
+            brk: Cell::new(0),
             init: Cell::new(false),
         }
     }
