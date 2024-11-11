@@ -40,7 +40,9 @@ pub extern "C" fn _start() -> ! {
     debug::print(b"\n");
 
     unsafe {
-        ALLOCATOR.free(ma_variable, luluint);
+        ALLOCATOR.dealloc(ma_variable, luluint);
+        //ALLOCATOR.dealloc(ma_variable2, luluint);
+        //ALLOCATOR.dealloc(ma_variable3, luluint);
     }
 
     loop {}

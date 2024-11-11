@@ -5,10 +5,16 @@ use core::sync;
 //use core::u8;
 use core::cell::Cell;
 
+pub struct Free_block {
+    next: *mut Free_block,
+    size: usize,
+}
+
 pub struct Lululucator {
     heap_ptr: Cell<usize>,
     brk: Cell<usize>,
     init: Cell<bool>,
+    free_list: Cell<*mut Free_block>,
 }
 
 #[allow(clippy::unnecessary_operation)]
@@ -60,7 +66,14 @@ unsafe impl GlobalAlloc for Lululucator {
         }
     }
 
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        let free_block = ptr as *mut Free_block;
+
+        (*free_block).size = layout.size();
+        (*free_block).next = self.free_list.get();
+
+        self.free_list.set(free_block);
+    }
 }
 
 impl Lululucator {
@@ -69,7 +82,16 @@ impl Lululucator {
             heap_ptr: Cell::new(0),
             brk: Cell::new(0),
             init: Cell::new(false),
+            free_list: Cell::new(null_mut()),
         }
     }
-    pub fn free(&mut self, addr: *mut u8, layout: Layout) {}
+}
+
+impl Free_block {
+    pub const fn new() -> Free_block {
+        Free_block {
+            next: null_mut(),
+            size: 0,
+        }
+    }
 }
