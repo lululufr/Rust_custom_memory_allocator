@@ -18,13 +18,12 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-
 #[global_allocator]
 static mut ALLOCATOR: Lululucator = Lululucator::new();
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let luluint = Layout::from_size_align(1000, 1).unwrap();
+    let luluint = Layout::from_size_align(0x1000, 1).unwrap();
 
     let ma_variable = unsafe { ALLOCATOR.alloc(luluint) };
     let ma_variable2 = unsafe { ALLOCATOR.alloc(luluint) };
@@ -36,8 +35,9 @@ pub extern "C" fn _start() -> ! {
     debug::print_hex(&ma_variable2 as *const _ as usize);
     debug::print(b"\n");
 
-
-    unsafe { ALLOCATOR.free(ma_variable, luluint); }
+    unsafe {
+        ALLOCATOR.free(ma_variable, luluint);
+    }
 
     loop {}
 }
