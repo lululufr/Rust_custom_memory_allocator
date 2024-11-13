@@ -5,8 +5,11 @@ use core::sync;
 //use core::u8;
 use core::cell::Cell;
 
+use crate::debug;
+
 pub struct Free_block {
     next: *mut Free_block,
+    addr: usize,
     size: usize,
 }
 
@@ -30,7 +33,7 @@ unsafe impl GlobalAlloc for Lululucator {
                 "syscall",
                 "mov rdi, rax",
 
-                "add rdi, 0x5000",
+                "add rdi, 0x500000",
                 "mov rax, 12",
                 "syscall",
 
@@ -41,24 +44,8 @@ unsafe impl GlobalAlloc for Lululucator {
             &self.heap_ptr.set(brk_addr + layout.size());
             &self.brk.set(brk_addr);
             &self.init.set(true);
-            ((brk_addr - 0x5000) + layout.size()) as *mut u8
-        } else if (self.heap_ptr.get() + layout.size()) > self.brk.get() {
-            asm!(
-                "mov rax, 12",
-                "mov rdi, 0",
-                "syscall",
 
-                "mov rdi, rax",
-                "add rdi, 0x5000",
-                "mov rax, 12",
-                "syscall",
-
-                lateout("rax") brk_addr,
-                out("rdi") _,
-            );
-            &self.brk.set(brk_addr);
-            &self.heap_ptr.set(brk_addr + layout.size());
-            ((brk_addr - 0x5000) + layout.size()) as *mut u8
+            ((brk_addr - 0x500000) + layout.size()) as *mut u8
         } else {
             &self.heap_ptr.set(&self.heap_ptr.get() + layout.size());
 
@@ -67,12 +54,10 @@ unsafe impl GlobalAlloc for Lululucator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        let free_block = ptr as *mut Free_block;
+        let mut free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
 
-        (*free_block).size = layout.size();
-        (*free_block).next = self.free_list.get();
-
-        self.free_list.set(free_block);
+        self.free_list
+            .set(&free_block as *const _ as *mut Free_block);
     }
 }
 
@@ -85,13 +70,29 @@ impl Lululucator {
             free_list: Cell::new(null_mut()),
         }
     }
-}
 
-impl Free_block {
-    pub const fn new() -> Free_block {
-        Free_block {
-            next: null_mut(),
-            size: 0,
+    pub unsafe fn debug_free_blocks(&self) {
+        let mut current = self.free_list.get();
+
+        debug::print(b"AFFICHAGE LISTE CHAINE DE FREE \n");
+
+        while !current.is_null() {
+            let block = &*current;
+            debug::print_hex(block.next as usize);
+            debug::print(b"\n");
+
+            current = block.next;
         }
     }
 }
+
+impl Free_block {
+    pub const fn new(fb: *mut Free_block, addr: usize, si: usize) -> Free_block {
+        Free_block {
+            next: fb,
+            addr: addr,
+            size: si,
+        }
+    }
+}
+

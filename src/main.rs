@@ -41,8 +41,12 @@ pub extern "C" fn _start() -> ! {
 
     unsafe {
         ALLOCATOR.dealloc(ma_variable, luluint);
-        //ALLOCATOR.dealloc(ma_variable2, luluint);
+        ALLOCATOR.dealloc(ma_variable2, luluint);
         //ALLOCATOR.dealloc(ma_variable3, luluint);
+    }
+
+    unsafe {
+        ALLOCATOR.debug_free_blocks();
     }
 
     loop {}
