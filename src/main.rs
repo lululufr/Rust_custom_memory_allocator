@@ -23,7 +23,7 @@ static mut ALLOCATOR: Lululucator = Lululucator::new();
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let luluint = Layout::from_size_align(1024, 1).unwrap();
+    let luluint = Layout::from_size_align(1024, core::mem::align_of::<Free_block>()).unwrap();
 
     let ma_variable = unsafe { ALLOCATOR.alloc(luluint) };
     let ma_variable2 = unsafe { ALLOCATOR.alloc(luluint) };
@@ -41,13 +41,16 @@ pub extern "C" fn _start() -> ! {
 
     unsafe {
         ALLOCATOR.dealloc(ma_variable, luluint);
-        ALLOCATOR.dealloc(ma_variable2, luluint);
-        ALLOCATOR.dealloc(ma_variable3, luluint);
-    }
+        ALLOCATOR.debug_free_blocks();
 
-    unsafe {
+        ALLOCATOR.dealloc(ma_variable2, luluint);
+        ALLOCATOR.debug_free_blocks();
+
+        ALLOCATOR.dealloc(ma_variable3, luluint);
         ALLOCATOR.debug_free_blocks();
     }
+
+    unsafe {}
 
     loop {}
 }
