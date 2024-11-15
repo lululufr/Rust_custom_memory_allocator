@@ -4,13 +4,17 @@ use core::ptr::{null, null_mut};
 use core::sync;
 //use core::u8;
 use core::cell::Cell;
+use core::mem::size_of;
 
 use crate::debug::{self, print_hex};
 
+const HEAP_SIZE: usize = 0x100000;
+const FREEBLOCK_SIZE: usize = size_of::<Free_block>();
+
 pub struct Free_block {
-    next: *mut Free_block,
-    addr: usize,
-    size: usize,
+    next: Cell<*mut Free_block>,
+    addr: Cell<usize>,
+    size: Cell<usize>,
 }
 
 pub struct Lululucator {
@@ -33,9 +37,11 @@ unsafe impl GlobalAlloc for Lululucator {
                 "syscall",
                 "mov rdi, rax",
 
-                "add rdi, 0x500000",
+                "add rdi, {heap_size}",
                 "mov rax, 12",
                 "syscall",
+
+                heap_size = const HEAP_SIZE,
 
                 lateout("rax") brk_addr,
                 out("rdi") _,
@@ -45,7 +51,7 @@ unsafe impl GlobalAlloc for Lululucator {
             self.brk.set(brk_addr);
             self.init.set(true);
 
-            ((brk_addr - 0x500000) + layout.size()) as *mut u8
+            ((brk_addr - HEAP_SIZE) + layout.size()) as *mut u8
         } else {
             self.heap_ptr.set(self.heap_ptr.get() + layout.size());
 
@@ -62,7 +68,9 @@ unsafe impl GlobalAlloc for Lululucator {
         debug::print_hex(ptr as usize);
         debug::print(b"\n");
 
-        let mut fb = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
+        //let fb = self.allocate_free_block();
+
+        let fb = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
 
         debug::print(b"valeur fb : ");
         debug::print_hex(&fb as *const _ as usize);
@@ -93,6 +101,10 @@ impl Lululucator {
 
 impl Free_block {
     pub const fn new(next: *mut Free_block, addr: usize, size: usize) -> Free_block {
-        Free_block { next, addr, size }
+        Free_block {
+            next: Cell::new(next),
+            addr: Cell::new(addr),
+            size: Cell::new(size),
+        }
     }
 }
