@@ -29,54 +29,55 @@ pub struct Lululucator {
 unsafe impl GlobalAlloc for Lululucator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let mut brk_addr: usize;
+        unsafe {
+            if !self.init.get() {
+                asm!(
+                    "mov rax, 12",
+                    "mov rdi, 0",
+                    "syscall",
+                    "mov rdi, rax",
 
-        if !self.init.get() {
-            asm!(
-                "mov rax, 12",
-                "mov rdi, 0",
-                "syscall",
-                "mov rdi, rax",
+                    "add rdi, {heap_size}",
+                    "mov rax, 12",
+                    "syscall",
 
-                "add rdi, {heap_size}",
-                "mov rax, 12",
-                "syscall",
+                    heap_size = const HEAP_SIZE,
 
-                heap_size = const HEAP_SIZE,
+                    lateout("rax") brk_addr,
+                    out("rdi") _,
+                );
 
-                lateout("rax") brk_addr,
-                out("rdi") _,
-            );
+                self.heap_ptr.set(brk_addr + layout.size());
+                self.brk.set(brk_addr);
+                self.init.set(true);
 
-            self.heap_ptr.set(brk_addr + layout.size());
-            self.brk.set(brk_addr);
-            self.init.set(true);
+                ((brk_addr - HEAP_SIZE) + layout.size()) as *mut u8
+            } else {
+                self.heap_ptr.set(self.heap_ptr.get() + layout.size());
 
-            ((brk_addr - HEAP_SIZE) + layout.size()) as *mut u8
-        } else {
-            self.heap_ptr.set(self.heap_ptr.get() + layout.size());
-
-            (self.heap_ptr.get() + layout.size()) as *mut u8
+                (self.heap_ptr.get() + layout.size()) as *mut u8
+            }
         }
     }
-
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        debug::print(b"valeur avant update free : ");
-        debug::print_hex(self.free_list.get() as usize);
-        debug::print(b"\n");
-
         debug::print(b"valeur ptr : ");
         debug::print_hex(ptr as usize);
         debug::print(b"\n");
 
-        //let fb = self.allocate_free_block();
+        unsafe {
+            let mut free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
 
-        let fb = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
+            debug::print(b"addr free list  : ");
+            debug::print_hex(self.free_list.get() as usize);
+            debug::print(b"\n");
 
-        debug::print(b"valeur fb : ");
-        debug::print_hex(&fb as *const _ as usize);
-        debug::print(b"\n");
+            debug::print(b"addr freeblock : ");
+            debug::print_hex(&free_block as *const _ as usize);
+            debug::print(b"\n");
 
-        self.free_list.set(&fb as *const _ as *mut Free_block);
+            self.free_list
+                .set(&free_block as *const _ as *mut Free_block);
+        }
     }
 }
 

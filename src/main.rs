@@ -32,7 +32,7 @@ pub extern "C" fn _start() -> ! {
     let addr = "prout test";
     debug::print_hex(ma_variable as *const _ as usize);
     debug::print(b"\n");
-    //ok
+
     debug::print_hex(ma_variable2 as *const _ as usize);
     debug::print(b"\n");
 
