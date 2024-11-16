@@ -8,8 +8,9 @@ use core::mem::size_of;
 
 use crate::debug::{self, print_hex};
 
-const HEAP_SIZE: usize = 0x100000;
+const HEAP_SIZE: usize = 1024 * 1024;
 const FREEBLOCK_SIZE: usize = size_of::<Free_block>();
+const HEAP_FREEBLOCK_SIZE: usize = HEAP_SIZE / 0x10;
 
 pub struct Free_block {
     next: Cell<*mut Free_block>,
@@ -18,7 +19,8 @@ pub struct Free_block {
 }
 
 pub struct Lululucator {
-    heap_ptr: Cell<usize>,
+    alloc_ptr: Cell<usize>,
+    heap_start: Cell<usize>,
     brk: Cell<usize>,
     init: Cell<bool>,
     free_list: Cell<*mut Free_block>,
@@ -47,15 +49,16 @@ unsafe impl GlobalAlloc for Lululucator {
                     out("rdi") _,
                 );
 
-                self.heap_ptr.set(brk_addr + layout.size());
+                self.heap_start.set(brk_addr - HEAP_SIZE);
+                self.alloc_ptr.set((brk_addr - HEAP_SIZE) + layout.size());
                 self.brk.set(brk_addr);
                 self.init.set(true);
 
-                ((brk_addr - HEAP_SIZE) + layout.size()) as *mut u8
+                self.alloc_ptr.get() as *mut u8
             } else {
-                self.heap_ptr.set(self.heap_ptr.get() + layout.size());
+                self.alloc_ptr.set((self.alloc_ptr.get()) + layout.size());
 
-                (self.heap_ptr.get() + layout.size()) as *mut u8
+                ((self.alloc_ptr.get()) + layout.size()) as *mut u8
             }
         }
     }
@@ -64,27 +67,33 @@ unsafe impl GlobalAlloc for Lululucator {
         debug::print_hex(ptr as usize);
         debug::print(b"\n");
 
-        unsafe {
-            let mut free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
+        let free_block_size =
+            Layout::from_size_align(FREEBLOCK_SIZE, core::mem::align_of::<Free_block>()).unwrap();
 
-            debug::print(b"addr free list  : ");
-            debug::print_hex(self.free_list.get() as usize);
-            debug::print(b"\n");
+        //let free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
 
-            debug::print(b"addr freeblock : ");
-            debug::print_hex(&free_block as *const _ as usize);
-            debug::print(b"\n");
+        debug::print(b"addr free list  : ");
+        debug::print_hex(self.free_list.get() as usize);
+        debug::print(b"\n");
 
-            self.free_list
-                .set(&free_block as *const _ as *mut Free_block);
-        }
+        let ptr_free_block = unsafe { self.alloc(free_block_size) };
+
+        debug::print(b"addr freeblock : ");
+        debug::print_hex(ptr_free_block as usize);
+        debug::print(b"\n");
+
+        //self.free_list
+        //    .set(&free_block as *const _ as *mut Free_block);
+
+        debug::print(b"\n");
     }
 }
 
 impl Lululucator {
     pub const fn new() -> Lululucator {
         Lululucator {
-            heap_ptr: Cell::new(0),
+            alloc_ptr: Cell::new(0),
+            heap_start: Cell::new(0),
             brk: Cell::new(0),
             init: Cell::new(false),
             free_list: Cell::new(null_mut()),
@@ -92,11 +101,11 @@ impl Lululucator {
     }
 
     pub unsafe fn debug_free_blocks(&self) {
-        let mut current = self.free_list.get();
+        //let mut current = self.free_list.get();
 
-        debug::print(b"\nFreeblock addr : ");
-        debug::print_hex(current as usize);
-        debug::print(b"\n");
+        //debug::print(b"\nFreeblock addr : ");
+        //debug::print_hex(current as usize);
+        //debug::print(b"\n");
     }
 }
 
