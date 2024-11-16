@@ -63,15 +63,15 @@ unsafe impl GlobalAlloc for Lululucator {
         }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        debug::print(b"-----BLOC FREE-----\n");
+        //debug::print(b"-----BLOC FREE-----\n");
 
-        debug::print(b"Addr 1er bloc : ");
-        debug::print_hex(self.free_list.get() as usize);
-        debug::print(b"\n");
+        //debug::print(b"Addr 1er bloc : ");
+        //debug::print_hex(self.free_list.get() as usize);
+        //debug::print(b"\n");
 
-        debug::print(b"Addr vide disponible : ");
-        debug::print_hex(ptr as usize);
-        debug::print(b"\n");
+        //debug::print(b"Addr vide disponible : ");
+        //debug::print_hex(ptr as usize);
+        //debug::print(b"\n");
 
         let free_block_size =
             Layout::from_size_align(FREEBLOCK_SIZE, core::mem::align_of::<Free_block>()).unwrap();
@@ -82,9 +82,9 @@ unsafe impl GlobalAlloc for Lululucator {
 
         unsafe { core::ptr::write(ptr_free_block as *mut Free_block, free_block) };
 
-        debug::print(b"Addr du freeblock : ");
-        debug::print_hex(ptr_free_block as usize);
-        debug::print(b"\n");
+        //debug::print(b"Addr du freeblock : ");
+        //debug::print_hex(ptr_free_block as usize);
+        //debug::print(b"\n");
 
         self.free_list.set(ptr_free_block as *mut Free_block);
 
@@ -104,11 +104,27 @@ impl Lululucator {
     }
 
     pub unsafe fn debug_free_blocks(&self) {
-        //let mut current = self.free_list.get();
+        let mut current = self.free_list.get();
 
         //debug::print(b"\nFreeblock addr : ");
         //debug::print_hex(current as usize);
         //debug::print(b"\n");
+        //
+        //
+        while !current.is_null() {
+            let block = &*current; // Déréférence le pointeur pour accéder au bloc
+
+            debug::print(b"Bloc libre - Adresse: ");
+            debug::print_hex(block.addr.get());
+            debug::print(b", Taille: ");
+            debug::print_hex(block.size.get());
+            debug::print(b", Next: ");
+            debug::print_hex(block.next.get() as usize);
+            debug::print(b"\n");
+
+            // Passe au bloc suivant
+            current = block.next.get();
+        }
     }
 }
 
