@@ -26,6 +26,11 @@ pub struct Lululucator {
     free_list: Cell<*mut Free_block>,
 }
 
+fn find_optimal_free_block(size: usize) /* -> *mut Free_block */
+{
+    //TODO: Implement une fonction pour trouver le block free le plus optimal
+}
+
 #[allow(clippy::unnecessary_operation)]
 #[allow(unsafe_code)]
 unsafe impl GlobalAlloc for Lululucator {
@@ -87,8 +92,6 @@ unsafe impl GlobalAlloc for Lululucator {
         //debug::print(b"\n");
 
         self.free_list.set(ptr_free_block as *mut Free_block);
-
-        debug::print(b"\n");
     }
 }
 
@@ -106,11 +109,7 @@ impl Lululucator {
     pub unsafe fn debug_free_blocks(&self) {
         let mut current = self.free_list.get();
 
-        //debug::print(b"\nFreeblock addr : ");
-        //debug::print_hex(current as usize);
-        //debug::print(b"\n");
-        //
-        //
+        debug::print(b"\n");
         while !current.is_null() {
             let block = &*current; // Déréférence le pointeur pour accéder au bloc
 
