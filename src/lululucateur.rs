@@ -63,27 +63,30 @@ unsafe impl GlobalAlloc for Lululucator {
         }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        debug::print(b"valeur ptr : ");
+        debug::print(b"-----BLOC FREE-----\n");
+
+        debug::print(b"Addr 1er bloc : ");
+        debug::print_hex(self.free_list.get() as usize);
+        debug::print(b"\n");
+
+        debug::print(b"Addr vide disponible : ");
         debug::print_hex(ptr as usize);
         debug::print(b"\n");
 
         let free_block_size =
             Layout::from_size_align(FREEBLOCK_SIZE, core::mem::align_of::<Free_block>()).unwrap();
 
-        //let free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
-
-        debug::print(b"addr free list  : ");
-        debug::print_hex(self.free_list.get() as usize);
-        debug::print(b"\n");
+        let free_block = Free_block::new(self.free_list.get(), ptr as usize, layout.size());
 
         let ptr_free_block = unsafe { self.alloc(free_block_size) };
 
-        debug::print(b"addr freeblock : ");
+        unsafe { core::ptr::write(ptr_free_block as *mut Free_block, free_block) };
+
+        debug::print(b"Addr du freeblock : ");
         debug::print_hex(ptr_free_block as usize);
         debug::print(b"\n");
 
-        //self.free_list
-        //    .set(&free_block as *const _ as *mut Free_block);
+        self.free_list.set(ptr_free_block as *mut Free_block);
 
         debug::print(b"\n");
     }
