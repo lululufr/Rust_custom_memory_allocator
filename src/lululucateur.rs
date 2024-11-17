@@ -33,7 +33,10 @@ unsafe impl GlobalAlloc for Lululucator {
         let mut brk_addr: usize;
         unsafe {
             if !self.init.get() {
-                debug::print(b"\nINITIALISATION DE LA HEAP\n");
+                if cfg!(debug_assertions) {
+                    debug::print(b"\nINITIALISATION DE LA HEAP\n");
+                }
+
                 asm!(
                     "mov rax, 12",
                     "mov rdi, 0",
@@ -55,11 +58,12 @@ unsafe impl GlobalAlloc for Lululucator {
                 self.brk.set(brk_addr);
                 self.init.set(true);
 
-                debug::print(b"Addr alloue : ");
-                debug::print_hex(self.alloc_ptr.get());
+                if cfg!(debug_assertions) {
+                    debug::print(b"Addr alloue : ");
+                    debug::print_hex(self.alloc_ptr.get());
 
-                debug::print(b"\nFIN INITIALISATION\n");
-
+                    debug::print(b"\nFIN INITIALISATION\n");
+                }
                 self.alloc_ptr.get() as *mut u8
             } else {
                 //TODO : c'est degeulasse ca !! a changer
@@ -70,7 +74,6 @@ unsafe impl GlobalAlloc for Lululucator {
 
                 let free_block = self.find_optimal_free_block(layout.size());
 
-                //TODO : gerer la suppression du freeblock
                 if !free_block.is_null() {
                     //suppréssion freeblock de la liste
                     let mut current = free_block;
@@ -79,15 +82,23 @@ unsafe impl GlobalAlloc for Lululucator {
                 }
 
                 self.alloc_ptr.set((self.alloc_ptr.get()) + layout.size());
+
+                if cfg!(debug_assertions) {
+                    debug::print(b"\nAllocation : ");
+                    debug::print_hex((self.alloc_ptr.get()) + layout.size());
+                    debug::print(b"\n");
+                }
+
                 ((self.alloc_ptr.get()) + layout.size()) as *mut u8
             }
         }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        debug::print(b"\nDeallocation  : ");
-        debug::print_hex(ptr as usize);
-        debug::print(b"\n");
-
+        if cfg!(debug_assertions) {
+            debug::print(b"\nDeallocation  : ");
+            debug::print_hex(ptr as usize);
+            debug::print(b"\n");
+        }
         let free_block_size =
             Layout::from_size_align(FREEBLOCK_SIZE, core::mem::align_of::<Free_block>()).unwrap();
 
@@ -98,6 +109,10 @@ unsafe impl GlobalAlloc for Lululucator {
         unsafe { core::ptr::write(ptr_free_block as *mut Free_block, free_block) };
 
         self.free_list.set(ptr_free_block as *mut Free_block);
+
+        if cfg!(debug_assertions) {
+            unsafe { self.debug_free_blocks() };
+        }
     }
 }
 
@@ -137,9 +152,11 @@ impl Lululucator {
     }
 
     pub unsafe fn find_optimal_free_block(&self, size: usize) -> *mut Free_block {
-        debug::print(b"\nAllocation : Cherche le block le plus optimal...\n");
-        debug::print(b"Taille demande : ");
-        debug::print_hex(size);
+        if cfg!(debug_assertions) {
+            debug::print(b"\nAllocation : Cherche le block le plus optimal...\n");
+            debug::print(b"Taille demande : ");
+            debug::print_hex(size);
+        }
 
         let mut current = self.free_list.get();
         let mut optimal_block: *mut Free_block = null_mut();
@@ -158,22 +175,23 @@ impl Lululucator {
 
                     // Si on a un match parfait quit
                     if size_diff == 0 {
-                        debug::print(b"Match parfait\n");
+                        if cfg!(debug_assertions) {
+                            debug::print(b" Match parfait\n");
+                        }
                         break;
                     }
                 }
             }
             current = block.next.get();
         }
-
-        debug::print(b"\nBlock optimal : ");
-        debug::print_hex(optimal_block as usize);
-
-        //debug::print(b"\nBlock optimal size  : ");
-        //debug::print_hex(optimal_block.size.get() as usize);
-
+        if cfg!(debug_assertions) {
+            debug::print(b"\nBlock optimal : ");
+            debug::print_hex(optimal_block as usize);
+        }
         if optimal_block.is_null() {
-            debug::print(b"Block optimal null\n");
+            if cfg!(debug_assertions) {
+                debug::print(b"Block optimal null\n");
+            }
             null_mut()
         } else {
             optimal_block
@@ -181,9 +199,10 @@ impl Lululucator {
     }
 
     pub fn remove_free_block(&self, block: *mut Free_block) {
-        debug::print(b"\nSuppression du freeblock : \n");
-        debug::print_hex(block as usize);
-
+        if cfg!(debug_assertions) {
+            debug::print(b"\nSuppression du freeblock : \n");
+            debug::print_hex(block as usize);
+        }
         let mut current = self.free_list.get();
         let mut prev: *mut Free_block = null_mut();
         while !current.is_null() {
