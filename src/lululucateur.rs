@@ -72,7 +72,10 @@ unsafe impl GlobalAlloc for Lululucator {
 
                 //TODO : gerer la suppression du freeblock
                 if !free_block.is_null() {
-                    return free_block as *mut u8;
+                    //suppréssion freeblock de la liste
+                    let mut current = free_block;
+                    self.remove_free_block(free_block);
+                    return current as *mut u8;
                 }
 
                 self.alloc_ptr.set((self.alloc_ptr.get()) + layout.size());
@@ -174,6 +177,31 @@ impl Lululucator {
             null_mut()
         } else {
             optimal_block
+        }
+    }
+
+    pub fn remove_free_block(&self, block: *mut Free_block) {
+        debug::print(b"\nSuppression du freeblock : \n");
+        debug::print_hex(block as usize);
+
+        let mut current = self.free_list.get();
+        let mut prev: *mut Free_block = null_mut();
+        while !current.is_null() {
+            if current == block {
+                unsafe {
+                    if !prev.is_null() {
+                        (*prev).next.set((*block).next.get());
+                    } else {
+                        self.free_list.set((*block).next.get());
+                    }
+                }
+                break;
+            }
+
+            unsafe {
+                prev = current;
+                current = (*current).next.get();
+            }
         }
     }
 }
