@@ -30,6 +30,7 @@ pub extern "C" fn _start() -> ! {
     let ma_variable3 = unsafe { ALLOCATOR.alloc(luluint) };
 
     let addr = "prout test";
+    debug::print(b"\n");
 
     debug::print(b"Allocation : ");
     debug::print_hex(ma_variable as *const _ as usize);
@@ -54,7 +55,13 @@ pub extern "C" fn _start() -> ! {
         ALLOCATOR.debug_free_blocks();
     }
 
-    unsafe {}
+    let ma_variable4 = unsafe { ALLOCATOR.alloc(luluint) };
+    debug::print_hex(ma_variable3 as *const _ as usize);
+    debug::print(b"\n");
+
+    unsafe {
+        ALLOCATOR.debug_free_blocks();
+    }
 
     loop {}
 }
