@@ -4,27 +4,23 @@ pub fn print(buf: &[u8]) {
     let _ret: i32;
     unsafe {
         asm!(
-            "syscall",               // Effectuer l'appel système.
-            inlateout("rax") 1 => _ret,       // Numéro de syscall pour write (1).
-            in("rdi") 1,                   // Premier argument : file descriptor.
-            in("rsi") buf.as_ptr(),         // Deuxième argument : pointeur vers le buffer.
-            in("rdx") buf.len(),            // Troisième argument : longueur du buffer.
-            lateout("rcx") _,               // Registres écrasés par syscall.
+            "syscall",
+            inlateout("rax") 1 => _ret,
+            in("rdi") 1,
+            in("rsi") buf.as_ptr(),
+            in("rdx") buf.len(),
+            lateout("rcx") _,
             lateout("r11") _,
         );
     }
 }
 pub fn print_hex(mut addr: usize) -> () {
-    //prefix
     unsafe {
-        print(b"0x");
+        let mut cpt = 0;
 
-        //récupération du nombre de nibbles
         let mut nibbles = count_nibbles(addr) as isize;
 
-        //affichage des nibbles
         while nibbles > -1 {
-            // let num = (addr >> 4) & 0xF;
             let num = ((addr >> 4 * nibbles) & 0xF) as u8;
             let c = match num {
                 0 => b'0',
@@ -37,15 +33,19 @@ pub fn print_hex(mut addr: usize) -> () {
                 7 => b'7',
                 8 => b'8',
                 9 => b'9',
-                10 => b'A',
-                11 => b'B',
-                12 => b'C',
-                13 => b'D',
-                14 => b'E',
-                15 => b'F',
+                10 => b'a',
+                11 => b'b',
+                12 => b'c',
+                13 => b'd',
+                14 => b'e',
+                15 => b'f',
                 _ => b'?',
             };
             print(&[c]);
+            cpt += 1;
+            if cpt == 1 {
+                print(b"x");
+            }
 
             nibbles -= 1;
         }
@@ -55,11 +55,11 @@ pub fn print_hex(mut addr: usize) -> () {
 pub fn count_nibbles(mut num: usize) -> usize {
     unsafe {
         if num == 0 {
-            return 1; // Zero nécessite au moins un nibble
+            return 1;
         }
         let mut count = 0;
         while num > 0 {
-            num >>= 4; // Décale `num` de 4 bits vers la droite (équivalent à diviser par 16)
+            num >>= 4;
             count += 1;
         }
         count

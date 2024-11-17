@@ -39,9 +39,16 @@ pub extern "C" fn _start() -> ! {
 
     let ma_variable4 = unsafe { ALLOCATOR.alloc(luluint) };
 
-    unsafe {
-        ALLOCATOR.debug_free_blocks();
-    }
+    if cfg!(debug_assertions) {
+        unsafe {
+            ALLOCATOR.debug_free_blocks();
+        }
 
+        let ma_variable5 = unsafe { ALLOCATOR.alloc(luluint) };
+
+        unsafe {
+            ALLOCATOR.debug_free_blocks();
+        }
+    }
     loop {}
 }
