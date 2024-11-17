@@ -56,6 +56,8 @@ pub extern "C" fn _start() -> ! {
     }
 
     let ma_variable4 = unsafe { ALLOCATOR.alloc(luluint) };
+
+    debug::print(b"\nAllocation :\n");
     debug::print_hex(ma_variable3 as *const _ as usize);
     debug::print(b"\n");
 
