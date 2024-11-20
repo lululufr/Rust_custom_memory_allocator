@@ -27,16 +27,19 @@ static mut ALLOCATOR: Lululucator = Lululucator::new();
 /// pour les tests
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    let lulusmall = Layout::from_size_align(512, core::mem::align_of::<Free_block>()).unwrap();
     let luluint = Layout::from_size_align(1024, core::mem::align_of::<Free_block>()).unwrap();
-
-    // on alloue 3 bloc
+    let lululong = Layout::from_size_align(2048, core::mem::align_of::<Free_block>()).unwrap();
+    // on alloue 3 bloc, ici les unsafes sont obligatoire car on touche a la mémoire
     let ma_variable = unsafe { ALLOCATOR.alloc(luluint) };
     let ma_variable2 = unsafe { ALLOCATOR.alloc(luluint) };
     let ma_variable3 = unsafe { ALLOCATOR.alloc(luluint) };
+    let ma_variable7 = unsafe { ALLOCATOR.alloc(lululong) };
 
     let addr = "prout test";
 
-    // on libère les 3 blocs
+    // on libère les 3 blocs , ici pareil pour le unsafe, pas le choix, car mon dealloc alloue de
+    // la mémoire
     unsafe {
         ALLOCATOR.dealloc(ma_variable, luluint);
         ALLOCATOR.dealloc(ma_variable2, luluint);
@@ -53,6 +56,17 @@ pub extern "C" fn _start() -> ! {
 
         // on alloue un bloc
         let ma_variable5 = unsafe { ALLOCATOR.alloc(luluint) };
+        unsafe {
+            ALLOCATOR.dealloc(ma_variable7, lululong);
+        }
+
+        let ma_variable8 = unsafe { ALLOCATOR.alloc(lululong) };
+
+        unsafe {
+            ALLOCATOR.debug_free_blocks();
+        }
+
+        let ma_variable9 = unsafe { ALLOCATOR.alloc(lulusmall) };
 
         unsafe {
             ALLOCATOR.debug_free_blocks();

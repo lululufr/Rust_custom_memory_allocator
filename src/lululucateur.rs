@@ -96,9 +96,20 @@ unsafe impl GlobalAlloc for Lululucator {
 
                 if !free_block.is_null() {
                     //suppréssion freeblock de la liste
-                    let mut current = free_block;
-                    self.remove_free_block(free_block);
-                    return current as *mut u8;
+
+                    if layout.size() != (*free_block).size.get() {
+                        if cfg!(debug_assertions) {
+                            debug::print(b"\nTaille difference faut update !!");
+                            debug::print_hex(layout.size());
+                        }
+                        let mut current = free_block;
+                        self.update_free_block(free_block, layout.size());
+                        return current as *mut u8;
+                    } else {
+                        let mut current = free_block;
+                        self.remove_free_block(free_block);
+                        return current as *mut u8;
+                    }
                 }
 
                 self.alloc_ptr.set((self.alloc_ptr.get()) + layout.size());
@@ -117,7 +128,7 @@ unsafe impl GlobalAlloc for Lululucator {
     ///Pour dealloc c'est la que ca devient complex !!
     ///La fonction va prendre un pointeur et une taille !
     ///Elle va créer un free_block avec ces informations et l'ajouter a la liste chainé de free_block
-    ///Le point etant qu'il faut pouvoir allouer pour faire ca ! en tout ca j'alloue un block de taille FREEBLOCK_SIZE
+    ///Le point etant qu'il faut pouvoir allouer pour faire ca ! en tout cas j'alloue un block de taille FREEBLOCK_SIZE
     ///Je le remplis avec les informations et je l'ajoute a la liste chainé
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         if cfg!(debug_assertions) {
@@ -158,13 +169,14 @@ impl Lululucator {
     }
 
     ///Cette fonction me sert juste a debug elle affiche ma liste chainé de bloc free
-    pub unsafe fn debug_free_blocks(&self) {
+    pub fn debug_free_blocks(&self) {
         let mut current = self.free_list.get();
 
         debug::print(b"\n");
         debug::print(b"\n---------LISTE chaine de free_block------------\n");
         while !current.is_null() {
-            let block = unsafe { &*current }; // Déréférence le pointeur pour accéder au bloc
+            let block = unsafe { &*current }; // Déréférence le pointeur pour accéder
+                                              // au bloc nécéssite unsafe
 
             debug::print(b"\n| Adresse libre: ");
             debug::print_hex(block.addr.get());
@@ -228,6 +240,7 @@ impl Lululucator {
             }
             null_mut()
         } else {
+            //TODO AJOUTER L'UPDATE
             optimal_block
         }
     }
@@ -262,9 +275,29 @@ impl Lululucator {
             }
         }
     }
+
+    pub fn update_free_block(&self, block: *mut Free_block, size: usize) {
+        //TODO : UPDATE les blocs free pour pas perdre de mémoire
+        if cfg!(debug_assertions) {
+            debug::print(b"\nUpdate du freeblock : \n");
+            debug::print_hex(block as usize);
+        }
+        let mut current = self.free_list.get();
+        let mut prev: *mut Free_block = null_mut();
+        while !current.is_null() {
+            if current == block {
+                unsafe {
+                    prev = current;
+                    (*current).size.set((*current).size.get() - size);
+                    (*current).addr.set((*current).addr.get() + size);
+                }
+                break;
+            }
+        }
+    }
 }
 
-///Implem du freeblock .. j'ai rien a dire la dessus
+///Implem du freeblock .. j'ai rien a dire de plus la dessus
 impl Free_block {
     pub const fn new(next: *mut Free_block, addr: usize, size: usize) -> Free_block {
         Free_block {
