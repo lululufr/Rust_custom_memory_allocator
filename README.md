@@ -32,8 +32,12 @@ cargo run --release
 *Une rustdoc est également présente.*
 
 ### Mon architecture
-j'ai décider de faire un allocateur simple de type linked list.
-C'est a dire un allocateur qui va ajouter dans une liste chainé les éléments free.
+j'ai décider de faire un allocateur spécial !! 
+J'ai fais un mélange entre un Bump Allocateur , un linked list allocateur et un Fixed-size block allocateur !! 
+
+C'est a dire un allocateur qui va ajouter dans la heap petit a petit a la suite chonologiquement (bump allocateur), MAIS avec des taille de bloc fix (fixed block allocateur) et dans une liste chainé les éléments free reutilisable (Linked list allocateur ).
+
+C'est le LULULUCATOR !!!
 
 #### L'alloc 
 
