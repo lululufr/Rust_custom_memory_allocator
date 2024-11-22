@@ -39,14 +39,14 @@ C'est a dire un allocateur qui va ajouter dans une liste chainé les éléments 
 
   l'Allocation va se faire ainsi :
 
-##### Si l'allocation n'est pas initialisé : 
+###### Si l'allocation n'est pas initialisé : 
 
   Alors on va initialiser mon allocateur : 
 c'est a dire qu'a travers une routine assembleur ( via le syscall brk) on va allouer TOUTE la taille de la heap. De facon a faire le moins de syscall possible plus tard. 
 Puis on va gérer via la structure les emplacements de mémoire disponible. 
 Puis on va renvoyer l'adresse disponible. 
 
-##### Si l'allocation est initialisé : 
+###### Si l'allocation est initialisé : 
 
   Alors on va simplement renvoyer le "alloc_ptr" qui est ni plus ni moins qu'un pointeur qui pointe la ou dans la heap ( cela suit un ordre chronologique un peu ) il peut écrire. 
 Puis remplacer alloc_ptr par l'adresse du futur endroit ou l'allocateur ira allouer. Soit alloc_ptr + taille alloué précédemment. 
