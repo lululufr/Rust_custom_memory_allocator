@@ -5,5 +5,10 @@ edition = "2021"
 
 [profile.dev]
 panic = "abort"
+debug = true
+
+[profile.release]
+panic = "abort"
+debug = false
 
 [dependencies]
