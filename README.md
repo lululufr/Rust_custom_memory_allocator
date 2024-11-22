@@ -7,31 +7,67 @@ Voici mon allocateur de mémoire.
 Par défaut il y a de la compilation conditionnelle.
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
+Pour lancer en mode debug (mode par defaut): 
+Il va afficher en temps dans la console les actions mémoire qui vont etre effectué.
+```
+cargo run
+```
+
+Pour lancer en mode release (mode par defaut):
+Sans affichage dans la console.
+```
+cargo run --release
+```
+*Une rustdoc est également présente.*
+
 ### Mon architecture
-j'ai décider de faire un allocateur simple. 
+j'ai décider de faire un allocateur simple de type linked list.
+C'est a dire un allocateur qui va ajouter dans une liste chainé les éléments free.
 
 #### L'alloc 
 
   l'Allocation va se faire ainsi :
 
-###### Si l'allocation n'est pas initialisé : 
+##### Si l'allocation n'est pas initialisé : 
 
   Alors on va initialiser mon allocateur : 
-c'est a dire qu'a travers une routine assembleur ( via le syscall brk) on va allouer TOUTE la taille de la heap.
+c'est a dire qu'a travers une routine assembleur ( via le syscall brk) on va allouer TOUTE la taille de la heap. De facon a faire le moins de syscall possible plus tard. 
 Puis on va gérer via la structure les emplacements de mémoire disponible. 
 Puis on va renvoyer l'adresse disponible. 
 
-###### Si l'allocation est initialisé : 
+##### Si l'allocation est initialisé : 
 
   Alors on va simplement renvoyer le "alloc_ptr" qui est ni plus ni moins qu'un pointeur qui pointe la ou dans la heap ( cela suit un ordre chronologique un peu ) il peut écrire. 
 Puis remplacer alloc_ptr par l'adresse du futur endroit ou l'allocateur ira allouer. Soit alloc_ptr + taille alloué précédemment. 
 
+Dans le cas ou il y a un bloc free capable d'acceuillir le bloc qui va etre alloué : 
+Alors le bloc free va etre donné a cette allocation. 
+Si le bloc fait la meme taille, alors l'adresse est donné et le free_bloc supprimé de la liste chainé. 
+
+Si le bloc donné est plus grand , alors le free bloc en question va etre modifié de facon a pointer sur le reste de la taille non donné.
+exemple : 
+
+je donne 100 -> Il n'y a pas de free_block -> j'alloue
+ou 
+je donne 100 -> Il y a un freeblock de taille 100 -> je retourne l'adresse dispo -> je supprime le free_block de la linked list
+ou 
+je donne 100 -> il y a un freeblock de 250 -> je retourne l'adresse dispo -> j'update le free_block pour le faire pointer vers les 150 restant. 
+
+
 #### Le dealloc
 
 ###### La Deallocation  
-  Elle va consitster simplement ajouter dans une liste chainé un élément de structure Free_Block qui indique une adresse et une taille. 
+  Elle va consitster simplement ajouter dans une liste chainé un élément de structure Free_Block.
 
-Puis lors de l'allocation avant d'allouer la ou alloc_ptr pointe il va etre vérifié dans cette liste qu'il n'y a pas deja un endroit capable de prendre la taille donné
+  ```rust
+pub struct Free_block {
+    next: Cell<*mut Free_block>,
+    addr: Cell<usize>,
+    size: Cell<usize>,
+}
+
+```
+
 
 ###### Le Free_Block et la liste chainé  
 Le free block prend juste une taille, une adresse et un next.
