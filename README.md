@@ -4,6 +4,17 @@
 
 Voici mon allocateur de mémoire.
 
+```rust
+pub struct Lululucator {
+    alloc_ptr: Cell<usize>,
+    heap_start: Cell<usize>,
+    brk: Cell<usize>,
+    init: Cell<bool>,
+    free_list: Cell<*mut Free_block>,
+}
+
+```
+
 Par défaut il y a de la compilation conditionnelle.
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
