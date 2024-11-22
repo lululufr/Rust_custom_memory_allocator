@@ -8,8 +8,6 @@ Par défaut il y a de la compilation conditionnelle.
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
 ### Mon architecture
-
-```
 j'ai décider de faire un allocateur simple. 
 
 #### L'alloc 
