@@ -56,6 +56,8 @@ unsafe impl GlobalAlloc for Lululucator {
                     debug::print(b"\nINITIALISATION DE LA HEAP\n");
                 }
 
+                //initialisation de la heap ! grosse allocation de mémoire comme ca on y revient
+                //pas -- je mettrais une grosse allocation de mémoire pour le kernel
                 asm!(
                     "mov rax, 12",
                     "mov rdi, 0",
@@ -240,7 +242,6 @@ impl Lululucator {
             }
             null_mut()
         } else {
-            //TODO AJOUTER L'UPDATE
             optimal_block
         }
     }
@@ -261,9 +262,9 @@ impl Lululucator {
             if current == block {
                 unsafe {
                     if !prev.is_null() {
-                        (*prev).next.set((*block).next.get());
+                        (*prev).next.set((*block).next.get()); // on va simplement sauter un block dans la liste chainé
                     } else {
-                        self.free_list.set((*block).next.get());
+                        self.free_list.set((*block).next.get()); // on va simplement sauter un block dans la liste chainé
                     }
                 }
                 break;
