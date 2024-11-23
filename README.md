@@ -1,6 +1,6 @@
 # memory_allocator
 
-# Lucas MILLER 4SI4
+## Lucas MILLER 4SI4
 
 Voici mon allocateur de mémoire.
 
