@@ -18,60 +18,64 @@ pub struct Lululucator {
 Par défaut il y a de la compilation conditionnelle.
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
-Pour lancer en mode debug (mode par defaut): 
+Pour lancer en mode debug (mode par defaut):
 Il va afficher en temps dans la console les actions mémoire qui vont etre effectué.
+
 ```
 cargo run
 ```
 
-Pour lancer en mode release (mode par defaut):
+Pour lancer en mode release :
 Sans affichage dans la console.
+
 ```
 cargo run --release
 ```
+
 *Une rustdoc est également présente.*
 
 ### Mon architecture
-j'ai décider de faire un allocateur spécial !! 
-J'ai fais un mélange entre un Bump Allocateur , un linked list allocateur et un Fixed-size block allocateur !! 
+
+j'ai décider de faire un allocateur spécial !!
+J'ai fais un mélange entre un Bump Allocateur , un linked list allocateur et un Fixed-size block allocateur !!
 
 C'est a dire un allocateur qui va ajouter dans la heap petit a petit a la suite chonologiquement (bump allocateur), MAIS avec des taille de bloc fix (fixed block allocateur) et dans une liste chainé les éléments free reutilisable (Linked list allocateur ).
 
 C'est le LULULUCATOR !!!
 
-#### L'alloc 
+#### L'alloc
 
   l'Allocation va se faire ainsi :
 
-###### Si l'allocation n'est pas initialisé : 
+###### Si l'allocation n'est pas initialisé
 
-  Alors on va initialiser mon allocateur : 
-c'est a dire qu'a travers une routine assembleur ( via le syscall brk) on va allouer TOUTE la taille de la heap. De facon a faire le moins de syscall possible plus tard. 
-Puis on va gérer via la structure les emplacements de mémoire disponible. 
-Puis on va renvoyer l'adresse disponible. 
+  Alors on va initialiser mon allocateur :
+c'est a dire qu'a travers une routine assembleur ( via le syscall brk) on va allouer TOUTE la taille de la heap. De facon a faire le moins de syscall possible plus tard.
+Puis on va gérer via la structure les emplacements de mémoire disponible.
+Puis on va renvoyer l'adresse disponible.
 
-###### Si l'allocation est initialisé : 
+###### Si l'allocation est initialisé
 
-  Alors on va simplement renvoyer le "alloc_ptr" qui est ni plus ni moins qu'un pointeur qui pointe la ou dans la heap ( cela suit un ordre chronologique un peu ) il peut écrire. 
-Puis remplacer alloc_ptr par l'adresse du futur endroit ou l'allocateur ira allouer. Soit alloc_ptr + taille alloué précédemment. 
+  Alors on va simplement renvoyer le "alloc_ptr" qui est ni plus ni moins qu'un pointeur qui pointe la ou dans la heap ( cela suit un ordre chronologique un peu ) il peut écrire.
+Puis remplacer alloc_ptr par l'adresse du futur endroit ou l'allocateur ira allouer. Soit alloc_ptr + taille alloué précédemment.
 
-Dans le cas ou il y a un bloc free capable d'acceuillir le bloc qui va etre alloué : 
-Alors le bloc free va etre donné a cette allocation. 
-Si le bloc fait la meme taille, alors l'adresse est donné et le free_bloc supprimé de la liste chainé. 
+Dans le cas ou il y a un bloc free capable d'acceuillir le bloc qui va etre alloué :
+Alors le bloc free va etre donné a cette allocation.
+Si le bloc fait la meme taille, alors l'adresse est donné et le free_bloc supprimé de la liste chainé.
 
 Si le bloc donné est plus grand , alors le free bloc en question va etre modifié de facon a pointer sur le reste de la taille non donné.
-exemple : 
+exemple :
 
 je donne 100 -> Il n'y a pas de free_block -> j'alloue
-ou 
+ou
 je donne 100 -> Il y a un freeblock de taille 100 -> je retourne l'adresse dispo -> je supprime le free_block de la linked list
-ou 
-je donne 100 -> il y a un freeblock de 250 -> je retourne l'adresse dispo -> j'update le free_block pour le faire pointer vers les 150 restant. 
-
+ou
+je donne 100 -> il y a un freeblock de 250 -> je retourne l'adresse dispo -> j'update le free_block pour le faire pointer vers les 150 restant.
 
 #### Le dealloc
 
 ###### La Deallocation  
+
   Elle va consitster simplement ajouter dans une liste chainé un élément de structure Free_Block.
 
   ```rust
@@ -83,17 +87,12 @@ pub struct Free_block {
 
 ```
 
-
 ###### Le Free_Block et la liste chainé  
-Le free block prend juste une taille, une adresse et un next.
-Je n'ai pas besoin d'un prévious pour le moment. 
-Mais lorsque j'implémenterai "realloc" je le rajouterai. 
 
+Le free block prend juste une taille, une adresse et un next.
+Je n'ai pas besoin d'un prévious pour le moment.
+Mais lorsque j'implémenterai "realloc" je le rajouterai.
 
 ### Ressources
 
-Je n'ai pas utilisé de ressources spécifique. La majorité des problemes ont surtout été avec le rust en lui meme, syntax et spécificité. 
-
-
-
-
+Je n'ai pas utilisé de ressources spécifique. La majorité des problemes ont surtout été avec le rust en lui meme, syntax et spécificité.
