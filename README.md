@@ -19,7 +19,7 @@ Par défaut il y a de la compilation conditionnelle.
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
 Pour lancer en mode debug (mode par defaut):
-Il va afficher en temps dans la console les actions mémoire qui vont etre effectué.
+Il va afficher en temps réel dans la console les actions mémoires qui sont effectué.
 
 ```
 cargo run
@@ -34,12 +34,15 @@ cargo run --release
 
 *Une rustdoc est également présente.*
 
+```
+cargo doc
+```
+
 ### Mon architecture
 
-j'ai décider de faire un allocateur spécial !!
-J'ai fais un mélange entre un Bump Allocateur , un linked list allocateur et un Fixed-size block allocateur !!
+j'ai décider de faire un allocateur de type linked list. 
 
-C'est a dire un allocateur qui va ajouter dans la heap petit a petit a la suite chonologiquement (bump allocateur), MAIS avec des taille de bloc fix (fixed block allocateur) et dans une liste chainé les éléments free reutilisable (Linked list allocateur ).
+J'ai également voulu y implémenter des features de type fixed-block allocator et du bump. 
 
 C'est le LULULUCATOR !!!
 
