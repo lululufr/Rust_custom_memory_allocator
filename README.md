@@ -15,10 +15,12 @@ pub struct Lululucator {
 
 ```
 
-Par défaut il y a de la compilation conditionnelle. \n
+Par défaut il y a de la compilation conditionnelle.
+
 Il faut compiler en mode debug pour avoir l'affichage des blocs mémoires
 
-Pour lancer en mode debug (mode par defaut): \n
+Pour lancer en mode debug (mode par defaut):
+
 Il va afficher en temps réel dans la console les actions mémoires qui sont effectué.
 
 ```
@@ -69,11 +71,16 @@ Si le bloc fait la meme taille, alors l'adresse est donné et le free_bloc suppr
 Si le bloc donné est plus grand , alors le free bloc en question va etre modifié de facon a pointer sur le reste de la taille non donné.
 exemple :
 
-je donne 100 -> Il n'y a pas de free_block -> j'alloue \n
+je donne 100 -> Il n'y a pas de free_block -> j'alloue
+
 ou
-je donne 100 -> Il y a un freeblock de taille 100 -> je retourne l'adresse dispo -> je supprime le free_block de la linked list \n
+
+je donne 100 -> Il y a un freeblock de taille 100 -> je retourne l'adresse dispo -> je supprime le free_block de la linked list
+
 ou
-je donne 100 -> il y a un freeblock de 250 -> je retourne l'adresse dispo -> j'update le free_block pour le faire pointer vers les 150 restant. \n
+
+je donne 100 -> il y a un freeblock de 250 -> je retourne l'adresse dispo -> j'update le free_block pour le faire pointer vers les 150 restant. 
+
 
 #### Le dealloc
 
