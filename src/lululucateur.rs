@@ -11,7 +11,7 @@ use crate::debug::{self, print_hex};
 /// Heap size
 /// J'ai fais le choix d'allouer 1024 * 1024 octets pour la heap soit 1Mo
 /// Lors de la création du kernel je vais allouer beaucoup
-const HEAP_SIZE: usize = 1024 * 1024;
+const HEAP_SIZE: usize = 0x100000;
 const FREEBLOCK_SIZE: usize = size_of::<Free_block>();
 const HEAP_FREEBLOCK_SIZE: usize = HEAP_SIZE / 0x10;
 
@@ -62,11 +62,10 @@ unsafe impl GlobalAlloc for Lululucator {
                     "syscall",
                     "mov rdi, rax",
 
-                    "add rdi, {heap_size}",
+                    "add rdi, 0x100000",
                     "mov rax, 12",
                     "syscall",
 
-                    heap_size = const HEAP_SIZE,
 
                     lateout("rax") brk_addr,
                     out("rdi") _,
@@ -84,6 +83,14 @@ unsafe impl GlobalAlloc for Lululucator {
                     debug::print(b"\nFIN INITIALISATION\n");
                 }
                 self.alloc_ptr.get() as *mut u8
+            } else if (self.alloc_ptr.get() + layout.size()) > self.brk.get() {
+                if cfg!(debug_assertions) {
+                    debug::print(
+                        b"\nAllocation : Allocation impossible - augmentation de la heap\n",
+                    );
+                }
+                self.init.set(false);
+                return self.alloc(layout);
             } else {
                 //TODO : c'est degeulasse ca !! a changer
                 if layout.size() == FREEBLOCK_SIZE {
@@ -125,6 +132,7 @@ unsafe impl GlobalAlloc for Lululucator {
             }
         }
     }
+
     ///Pour dealloc c'est la que ca devient complex !!
     ///La fonction va prendre un pointeur et une taille !
     ///Elle va créer un free_block avec ces informations et l'ajouter a la liste chainé de free_block
