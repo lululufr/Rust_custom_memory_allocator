@@ -13,6 +13,8 @@ mod lululucateur;
 use core::panic::PanicInfo;
 use lululucateur::*;
 
+use core::ptr;
+
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
@@ -36,7 +38,7 @@ pub extern "C" fn _start() -> ! {
     let ma_variable3 = unsafe { ALLOCATOR.alloc(luluint) };
     let ma_variable7 = unsafe { ALLOCATOR.alloc(lululong) };
 
-    let addr = "prout test";
+    let string = "prout test\0";
 
     // on libère les 3 blocs , ici pareil pour le unsafe, pas le choix, car mon dealloc alloue de
     // la mémoire
@@ -49,9 +51,20 @@ pub extern "C" fn _start() -> ! {
     // on alloue un bloc
     let ma_variable4 = unsafe { ALLOCATOR.alloc(luluint) };
 
+    // on écrit dans la variable
+    unsafe {
+        for (i, &byte) in string.as_bytes().iter().enumerate() {
+            ptr::write(ma_variable4.add(i), byte);
+        }
+    }
+    // on libère le bloc
     if cfg!(debug_assertions) {
         unsafe {
             ALLOCATOR.debug_free_blocks();
+        }
+
+        unsafe {
+            ALLOCATOR.dealloc(ma_variable4, luluint);
         }
 
         // on alloue un bloc
